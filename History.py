@@ -17,7 +17,7 @@ days = st.number_input("Enter Days to Search (1-30):", min_value=1, max_value=30
 # List of broader keywords
 keywords = [
 
-“Dark History”, “Untold History”, “Historical Injustice”, “Real History Stories” , ”True History Documentary”, “History Documentary”, “Forgotten Wars”, “Ancient Civilizations”, “Medieval History”, “War Crimes History”, “History Storytelling”, “Lost Empires”, “Fallen Kingdoms”, “History Facts”, “World History Explained”
+“Dark History”, “Untold History”, “Historical Injustice”, “Real History Stories”, ”True History Documentary”, “History Documentary”, “Forgotten Wars”, “Ancient Civilizations”, “Medieval History”, “War Crimes History”, “History Storytelling”, “Lost Empires”, “Fallen Kingdoms”, “History Facts”, “World History Explained”
  
 ]
 
@@ -115,4 +115,3 @@ if st.button("Fetch Data"):
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
-
