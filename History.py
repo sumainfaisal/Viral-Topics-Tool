@@ -2,37 +2,61 @@ import streamlit as st
 import requests
 from datetime import datetime, timedelta
 
-# YouTube API Key
-API_KEY = " AIzaSyAx17oU8RXT4TpsUvuAjDz9cH1MVGnDtBI "
+# -----------------------------
+# YouTube API Configuration
+# -----------------------------
+API_KEY = "AIzaSyAx17oU8RXT4TpsUvuAjDz9cH1MVGnDtBI"
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
 
-# Streamlit App Title
+# -----------------------------
+# Streamlit App UI
+# -----------------------------
 st.title("YouTube Viral Topics Tool")
 
-# Input Fields
-days = st.number_input("Enter Days to Search (1-30):", min_value=1, max_value=30, value=5)
+days = st.number_input(
+    "Enter Days to Search (1–30):",
+    min_value=1,
+    max_value=30,
+    value=5
+)
 
-# List of broader keywords
+# -----------------------------
+# Keywords List (FIXED)
+# -----------------------------
 keywords = [
-
-“Dark History”, “Untold History”, “Historical Injustice”, “Real History Stories”, “True History Documentary”, “History Documentary”, “Forgotten Wars”, “Ancient Civilizations”, “Medieval History”, “War Crimes History”, “History Storytelling”, “Lost Empires”, “Fallen Kingdoms”, “History Facts”, “World History Explained”
- 
+    "Dark History",
+    "Untold History",
+    "Historical Injustice",
+    "Real History Stories",
+    "True History Documentary",
+    "History Documentary",
+    "Forgotten Wars",
+    "Ancient Civilizations",
+    "Medieval History",
+    "War Crimes History",
+    "History Storytelling",
+    "Lost Empires",
+    "Fallen Kingdoms",
+    "History Facts",
+    "World History Explained"
 ]
 
-# Fetch Data Button
+# -----------------------------
+# Fetch Data Logic
+# -----------------------------
 if st.button("Fetch Data"):
     try:
-        # Calculate date range
-        start_date = (datetime.utcnow() - timedelta(days=int(days))).isoformat("T") + "Z"
+        start_date = (
+            datetime.utcnow() - timedelta(days=int(days))
+        ).isoformat("T") + "Z"
+
         all_results = []
 
-        # Iterate over the list of keywords
         for keyword in keywords:
-            st.write(f"Searching for keyword: {keyword}")
+            st.write(f"🔍 Searching for: **{keyword}**")
 
-            # Define search parameters
             search_params = {
                 "part": "snippet",
                 "q": keyword,
@@ -43,75 +67,86 @@ if st.button("Fetch Data"):
                 "key": API_KEY,
             }
 
-            # Fetch video data
             response = requests.get(YOUTUBE_SEARCH_URL, params=search_params)
             data = response.json()
 
-            # Check if "items" key exists
             if "items" not in data or not data["items"]:
-                st.warning(f"No videos found for keyword: {keyword}")
+                st.warning(f"No videos found for: {keyword}")
                 continue
 
-            videos = data["items"]
-            video_ids = [video["id"]["videoId"] for video in videos if "id" in video and "videoId" in video["id"]]
-            channel_ids = [video["snippet"]["channelId"] for video in videos if "snippet" in video and "channelId" in video["snippet"]]
+            video_ids = [
+                item["id"]["videoId"]
+                for item in data["items"]
+                if "videoId" in item.get("id", {})
+            ]
+
+            channel_ids = [
+                item["snippet"]["channelId"]
+                for item in data["items"]
+                if "channelId" in item.get("snippet", {})
+            ]
 
             if not video_ids or not channel_ids:
-                st.warning(f"Skipping keyword: {keyword} due to missing video/channel data.")
                 continue
 
-            # Fetch video statistics
-            stats_params = {"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}
-            stats_response = requests.get(YOUTUBE_VIDEO_URL, params=stats_params)
+            # Video statistics
+            stats_response = requests.get(
+                YOUTUBE_VIDEO_URL,
+                params={
+                    "part": "statistics",
+                    "id": ",".join(video_ids),
+                    "key": API_KEY,
+                },
+            )
             stats_data = stats_response.json()
 
-            if "items" not in stats_data or not stats_data["items"]:
-                st.warning(f"Failed to fetch video statistics for keyword: {keyword}")
-                continue
-
-            # Fetch channel statistics
-            channel_params = {"part": "statistics", "id": ",".join(channel_ids), "key": API_KEY}
-            channel_response = requests.get(YOUTUBE_CHANNEL_URL, params=channel_params)
+            # Channel statistics
+            channel_response = requests.get(
+                YOUTUBE_CHANNEL_URL,
+                params={
+                    "part": "statistics",
+                    "id": ",".join(channel_ids),
+                    "key": API_KEY,
+                },
+            )
             channel_data = channel_response.json()
 
-            if "items" not in channel_data or not channel_data["items"]:
-                st.warning(f"Failed to fetch channel statistics for keyword: {keyword}")
+            if "items" not in stats_data or "items" not in channel_data:
                 continue
 
-            stats = stats_data["items"]
-            channels = channel_data["items"]
-
-            # Collect results
-            for video, stat, channel in zip(videos, stats, channels):
-                title = video["snippet"].get("title", "N/A")
-                description = video["snippet"].get("description", "")[:200]
-                video_url = f"https://www.youtube.com/watch?v={video['id']['videoId']}"
+            for video, stat, channel in zip(
+                data["items"], stats_data["items"], channel_data["items"]
+            ):
                 views = int(stat["statistics"].get("viewCount", 0))
                 subs = int(channel["statistics"].get("subscriberCount", 0))
 
-                if subs < 3000:  # Only include channels with fewer than 3,000 subscribers
+                if subs < 3000:
                     all_results.append({
-                        "Title": title,
-                        "Description": description,
-                        "URL": video_url,
+                        "Title": video["snippet"]["title"],
+                        "Description": video["snippet"]["description"][:200],
+                        "URL": f"https://www.youtube.com/watch?v={video['id']['videoId']}",
                         "Views": views,
-                        "Subscribers": subs
+                        "Subscribers": subs,
                     })
 
-        # Display results
+        # -----------------------------
+        # Display Results
+        # -----------------------------
         if all_results:
-            st.success(f"Found {len(all_results)} results across all keywords!")
+            st.success(f"✅ Found {len(all_results)} viral opportunities!")
             for result in all_results:
                 st.markdown(
-                    f"**Title:** {result['Title']}  \n"
-                    f"**Description:** {result['Description']}  \n"
-                    f"**URL:** [Watch Video]({result['URL']})  \n"
-                    f"**Views:** {result['Views']}  \n"
-                    f"**Subscribers:** {result['Subscribers']}"
+                    f"""
+                    **Title:** {result['Title']}  
+                    **Description:** {result['Description']}  
+                    **Views:** {result['Views']}  
+                    **Subscribers:** {result['Subscribers']}  
+                    **URL:** [Watch Video]({result['URL']})
+                    ---
+                    """
                 )
-                st.write("---")
         else:
-            st.warning("No results found for channels with fewer than 3,000 subscribers.")
+            st.warning("No results found under 3,000 subscribers.")
 
     except Exception as e:
-        st.error(f"An error occurred: {e}")
+        st.error(f"❌ Error: {e}")
