@@ -3,22 +3,39 @@ import requests
 from datetime import datetime, timedelta
 
 # YouTube API Key
-API_KEY = " AIzaSyAx17oU8RXT4TpsUvuAjDz9cH1MVGnDtBI "
+API_KEY = "YOUR_API_KEY_HERE"
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
 
 # Streamlit App Title
-st.title("YouTube Viral Topics Tool")
+st.title("Ocean Mysteries Viral Topics Tool 🌊")
 
 # Input Fields
 days = st.number_input("Enter Days to Search (1-30):", min_value=1, max_value=30, value=5)
 
-# List of broader keywords
+# 🔥 HIGH-VIRAL OCEAN KEYWORDS
 keywords = [
-
-“Dark History”, “untold history”, “historical injustice”, “real history stories”,”true history documentary”, “forgotten wars”, “ancient civilizations”, “medieval history”, “war crimes history”, “history storytelling”, “lost empires”, “fallen kingdoms”
- 
+    "deep sea mysteries",
+    "unknown ocean creatures",
+    "deep ocean secrets",
+    "creatures found in Mariana Trench",
+    "scary ocean discoveries",
+    "unexplored ocean facts",
+    "giant sea creatures real",
+    "bioluminescent creatures ocean",
+    "mysterious underwater discoveries",
+    "deep sea monsters caught on camera",
+    "strange things found in the ocean",
+    "ocean unexplained phenomena",
+    "lost cities under the ocean",
+    "real kraken sightings",
+    "dark ocean documentary",
+    "deep sea horror stories",
+    "underwater alien creatures",
+    "ocean secrets scientists can't explain",
+    "deep sea animals facts",
+    "what lives in the deepest ocean"
 ]
 
 # Fetch Data Button
@@ -47,7 +64,6 @@ if st.button("Fetch Data"):
             response = requests.get(YOUTUBE_SEARCH_URL, params=search_params)
             data = response.json()
 
-            # Check if "items" key exists
             if "items" not in data or not data["items"]:
                 st.warning(f"No videos found for keyword: {keyword}")
                 continue
@@ -57,7 +73,7 @@ if st.button("Fetch Data"):
             channel_ids = [video["snippet"]["channelId"] for video in videos if "snippet" in video and "channelId" in video["snippet"]]
 
             if not video_ids or not channel_ids:
-                st.warning(f"Skipping keyword: {keyword} due to missing video/channel data.")
+                st.warning(f"Skipping keyword: {keyword}")
                 continue
 
             # Fetch video statistics
@@ -65,8 +81,7 @@ if st.button("Fetch Data"):
             stats_response = requests.get(YOUTUBE_VIDEO_URL, params=stats_params)
             stats_data = stats_response.json()
 
-            if "items" not in stats_data or not stats_data["items"]:
-                st.warning(f"Failed to fetch video statistics for keyword: {keyword}")
+            if "items" not in stats_data:
                 continue
 
             # Fetch channel statistics
@@ -74,8 +89,7 @@ if st.button("Fetch Data"):
             channel_response = requests.get(YOUTUBE_CHANNEL_URL, params=channel_params)
             channel_data = channel_response.json()
 
-            if "items" not in channel_data or not channel_data["items"]:
-                st.warning(f"Failed to fetch channel statistics for keyword: {keyword}")
+            if "items" not in channel_data:
                 continue
 
             stats = stats_data["items"]
@@ -89,7 +103,8 @@ if st.button("Fetch Data"):
                 views = int(stat["statistics"].get("viewCount", 0))
                 subs = int(channel["statistics"].get("subscriberCount", 0))
 
-                if subs < 3000:  # Only include channels with fewer than 3,000 subscribers
+                # 🎯 GOLD FILTER (Low competition + high potential)
+                if subs < 5000:
                     all_results.append({
                         "Title": title,
                         "Description": description,
@@ -100,7 +115,7 @@ if st.button("Fetch Data"):
 
         # Display results
         if all_results:
-            st.success(f"Found {len(all_results)} results across all keywords!")
+            st.success(f"Found {len(all_results)} viral opportunities! 🚀")
             for result in all_results:
                 st.markdown(
                     f"**Title:** {result['Title']}  \n"
@@ -111,7 +126,7 @@ if st.button("Fetch Data"):
                 )
                 st.write("---")
         else:
-            st.warning("No results found for channels with fewer than 3,000 subscribers.")
+            st.warning("No low-competition viral videos found.")
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
